@@ -1,7 +1,10 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/labstack/echo/v4"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sbrunettajr/ifoody-api/application/http/controller"
 	"github.com/sbrunettajr/ifoody-api/domain/service"
 	"github.com/sbrunettajr/ifoody-api/infra/db"
@@ -17,6 +20,8 @@ func main() {
 
 	dataManager := repository.NewDataManager(db)
 
+	metricsService := service.NewMetricsService()
+
 	storeService := service.NewStoreService(dataManager)
 	categoryService := service.NewCategoryService(dataManager, storeService)
 	itemService := service.NewItemService(categoryService, dataManager, storeService)
@@ -26,6 +31,19 @@ func main() {
 	itemController := controller.NewItemController(itemService)
 
 	e := echo.New()
+
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			next(c)
+
+			metricsService.RegisterRequest(
+				c.Request().Method,
+				c.Request().URL.Path,
+				strconv.Itoa(c.Response().Status),
+			)
+			return nil
+		}
+	})
 
 	v1Group := e.Group("/v1")
 
@@ -50,6 +68,8 @@ func main() {
 	v1Group.POST("/orders", itemController.Create)
 
 	// appGroup := v1Group.Group("/app")
+
+	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 
 	e.Logger.Fatal(e.Start(":5000"))
 }

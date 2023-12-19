@@ -1,6 +1,7 @@
 version: '3'
 
 services:
+
   mysql:
     image: mysql:8.0.2
     environment:
@@ -10,3 +11,25 @@ services:
       - "3306:3306"
     volumes:
       - "./infra/db/scripts/schema.sql:/docker-entrypoint-initdb.d/1.sql"
+    networks:
+      - ifoody-network
+
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+    networks:
+      - ifoody-network
+
+  grafana:
+    image: grafana/grafana-enterprise:10.2.2-ubuntu
+    ports:
+      - "3000:3000"
+    networks:
+      - ifoody-network
+
+networks:
+  ifoody-network:
+    driver: bridge
