@@ -18,8 +18,8 @@ func NewMetricsService() MetricsService {
 
 	requestsTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "requests_total",
-			Help: "Total of requests",
+			Name: "http_requests_total",
+			Help: "Total of HTTP requests",
 		},
 		[]string{"method", "path", "statusCode"},
 	)
