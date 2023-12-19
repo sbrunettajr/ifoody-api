@@ -3,6 +3,5 @@ global:
 
 scrape_configs:
   - job_name: 'ifoody-api'
-    metrics_path: /metrics
     static_configs:
       - targets: ['192.168.1.102:5000']

@@ -25,8 +25,8 @@ func newStoreMySQLRepository(
 func (r storeMySQLRepository) Create(context context.Context, store entity.Store) error {
 	query := `
 		INSERT 
-		  INTO tb_store(uuid, fantasy_name, corporate_name)
-		VALUES (?, ?, ?);  
+		  INTO tb_store(uuid, fantasy_name, corporate_name, cnpj)
+		VALUES (?, ?, ?, ?);
 	`
 
 	_, err := r.db.ExecContext(
@@ -35,6 +35,7 @@ func (r storeMySQLRepository) Create(context context.Context, store entity.Store
 		store.UUID,
 		store.FantasyName,
 		store.CorporateName,
+		store.CNPJ,
 	)
 	if err != nil {
 		return err
@@ -49,7 +50,8 @@ func (r storeMySQLRepository) FindAll(context context.Context) ([]entity.Store, 
 			   ts.updated_at,
 			   ts.uuid,
 			   ts.fantasy_name,
-			   ts.corporate_name
+			   ts.corporate_name,
+			   ts.cnpj
 		  FROM tb_store ts 
 		 WHERE ts.deleted_at IS NULL; 
 	`
@@ -75,6 +77,7 @@ func (r storeMySQLRepository) FindAll(context context.Context) ([]entity.Store, 
 			&store.UUID,
 			&store.FantasyName,
 			&store.CorporateName,
+			&store.CNPJ,
 		)
 		if err != nil {
 			return nil, err
@@ -91,7 +94,8 @@ func (r storeMySQLRepository) FindByFantasyName(context context.Context, Fantasy
 			   ts.updated_at,
 			   ts.uuid,
 			   ts.fantasy_name,
-			   ts.corporate_name
+			   ts.corporate_name,
+			   ts.cnpj
 		  FROM tb_store ts 
 		 WHERE ts.deleted_at IS NULL
 		   AND ts.fantasy_name = ?; 
@@ -114,6 +118,7 @@ func (r storeMySQLRepository) FindByFantasyName(context context.Context, Fantasy
 		&store.UUID,
 		&store.FantasyName,
 		&store.CorporateName,
+		&store.CNPJ,
 	)
 	if err != nil {
 		return entity.Store{}, err
@@ -128,7 +133,8 @@ func (r storeMySQLRepository) FindByUUID(context context.Context, UUID string) (
 			   ts.updated_at,
 			   ts.uuid,
 			   ts.fantasy_name,
-			   ts.corporate_name
+			   ts.corporate_name,
+			   ts.cnpj
 		  FROM tb_store ts 
 		 WHERE ts.deleted_at IS NULL
 		   AND ts.uuid = ?; 
@@ -151,6 +157,7 @@ func (r storeMySQLRepository) FindByUUID(context context.Context, UUID string) (
 		&store.UUID,
 		&store.FantasyName,
 		&store.CorporateName,
+		&store.CNPJ,
 	)
 	if err != nil {
 		return entity.Store{}, err

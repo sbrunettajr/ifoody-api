@@ -6,6 +6,7 @@ CREATE TABLE tb_store(
     uuid VARCHAR(36) NOT NULL,
     fantasy_name VARCHAR(100) NOT NULL,
     corporate_name VARCHAR(100) NOT NULL,
+    cnpj VARCHAR(14) NOT NULL, -- UNIQUE,
     PRIMARY KEY(id)
 ); 
 

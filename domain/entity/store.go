@@ -5,4 +5,5 @@ type Store struct {
 	UUID          string
 	FantasyName   string
 	CorporateName string
+	CNPJ          string
 }
