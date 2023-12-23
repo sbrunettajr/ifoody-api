@@ -7,16 +7,12 @@ import (
 )
 
 type CreateCategoryRequest struct {
-	Name      string `json:"name"`
-	StoreUUID string `json:"store_uuid"`
+	Name string `json:"name"`
 }
 
 func (vm CreateCategoryRequest) ToEntity() entity.Category {
 	return entity.Category{
 		Name: vm.Name,
-		Store: entity.Store{
-			UUID: vm.StoreUUID,
-		},
 	}
 }
 
@@ -32,13 +28,17 @@ type findByStoreUUIDCategoriesResponse []categoryResponse
 func ParseFindByStoreUUIDCategoriesResponse(categories []entity.Category) findByStoreUUIDCategoriesResponse {
 	categoriesResponse := make(findByStoreUUIDCategoriesResponse, 0, len(categories))
 	for _, category := range categories {
-		categoryResponse := categoryResponse{
-			CreatedAt: category.CreatedAt,
-			UpdatedAt: category.UpdatedAt,
-			UUID:      category.UUID,
-			Name:      category.Name,
-		}
+		categoryResponse := ParseFindByUUIDCategoryResponse(category)
 		categoriesResponse = append(categoriesResponse, categoryResponse)
 	}
 	return categoriesResponse
+}
+
+func ParseFindByUUIDCategoryResponse(category entity.Category) categoryResponse {
+	return categoryResponse{
+		CreatedAt: category.CreatedAt,
+		UpdatedAt: category.UpdatedAt,
+		UUID:      category.UUID,
+		Name:      category.Name,
+	}
 }

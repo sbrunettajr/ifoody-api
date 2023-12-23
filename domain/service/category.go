@@ -24,12 +24,12 @@ func NewCategoryService(
 }
 
 func (s CategoryService) Create(context context.Context, category entity.Category) error {
+	category.UUID = uuid.NewString()
+
 	store, err := s.storeService.FindByUUID(context, category.Store.UUID)
 	if err != nil {
 		return err
 	}
-
-	category.UUID = uuid.NewString()
 	category.Store = store
 
 	err = s.dataManager.Category().Create(context, category)

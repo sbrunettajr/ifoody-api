@@ -11,7 +11,6 @@ type CreateItemRequest struct {
 	Description  string  `json:"description"`
 	Price        float64 `json:"price"`
 	CategoryUUID string  `json:"category_uuid"`
-	StoreUUID    string  `json:"store_uuid"`
 }
 
 func (vm CreateItemRequest) ToEntity() entity.Item {
@@ -21,9 +20,6 @@ func (vm CreateItemRequest) ToEntity() entity.Item {
 		Price:       vm.Price,
 		Category: entity.Category{
 			UUID: vm.CategoryUUID,
-		},
-		Store: entity.Store{
-			UUID: vm.StoreUUID,
 		},
 	}
 }

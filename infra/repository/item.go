@@ -71,24 +71,9 @@ func (r itemMySQLRepository) FindAll(context context.Context) ([]entity.Item, er
 		return nil, err
 	}
 
-	items := make([]entity.Item, 0)
-	for rows.Next() {
-		var item entity.Item
-		err = rows.Scan(
-			&item.ID,
-			&item.CreatedAt,
-			&item.UpdatedAt,
-			&item.UUID,
-			&item.Name,
-			&item.Description,
-			&item.Price,
-			&item.CategoryID,
-			&item.StoreID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, item)
+	items, err := parseEntities[entity.Item](rows, r.parseEntity)
+	if err != nil {
+		return nil, err
 	}
 	return items, nil
 }
@@ -105,7 +90,7 @@ func (r itemMySQLRepository) FindByCategoryUUID(context context.Context, categor
 			   ti.category_id,
 			   ti.store_id 
 		  FROM tb_item ti 
-		  JOIN tb_category tc ON tc.category_id = ti.category_id AND tc.deleted_at IS NULL
+		  JOIN tb_category tc ON tc.id = ti.category_id AND tc.deleted_at IS NULL
 		 WHERE ti.deleted_at IS NULL
 		   AND tc.uuid = ?; 
 	`
@@ -122,24 +107,9 @@ func (r itemMySQLRepository) FindByCategoryUUID(context context.Context, categor
 		return nil, err
 	}
 
-	items := make([]entity.Item, 0)
-	for rows.Next() {
-		var item entity.Item
-		err = rows.Scan(
-			&item.ID,
-			&item.CreatedAt,
-			&item.UpdatedAt,
-			&item.UUID,
-			&item.Name,
-			&item.Description,
-			&item.Price,
-			&item.CategoryID,
-			&item.StoreID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, item)
+	items, err := parseEntities[entity.Item](rows, r.parseEntity)
+	if err != nil {
+		return nil, err
 	}
 	return items, nil
 }
@@ -160,27 +130,7 @@ func (r itemMySQLRepository) FindByUUID(context context.Context, UUID string) (e
 		   AND ti.uuid = ?; 
 	`
 
-	row := r.db.QueryRowContext(
-		context,
-		query,
-		UUID,
-	)
-	if row.Err() != nil {
-		return entity.Item{}, row.Err()
-	}
-
-	var item entity.Item
-	err := row.Scan(
-		&item.ID,
-		&item.CreatedAt,
-		&item.UpdatedAt,
-		&item.UUID,
-		&item.Name,
-		&item.Description,
-		&item.Price,
-		&item.CategoryID,
-		&item.StoreID,
-	)
+	item, err := findByUUID[entity.Item](context, r.db, query, UUID, r.parseEntity)
 	if err != nil {
 		return entity.Item{}, err
 	}
@@ -224,4 +174,23 @@ func (r itemMySQLRepository) Update(context context.Context, item entity.Item) e
 		return err
 	}
 	return nil
+}
+
+func (r itemMySQLRepository) parseEntity(scan scanner) (entity.Item, error) {
+	var item entity.Item
+	err := scan.Scan(
+		&item.ID,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+		&item.UUID,
+		&item.Name,
+		&item.Description,
+		&item.Price,
+		&item.CategoryID,
+		&item.StoreID,
+	)
+	if err != nil {
+		return entity.Item{}, err
+	}
+	return item, nil
 }

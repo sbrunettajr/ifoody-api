@@ -21,7 +21,7 @@ func main() {
 
 	metricsService := service.NewMetricsService()
 
-	storeService := service.NewStoreService(dataManager)
+	storeService := service.NewStoreService(dataManager, metricsService)
 	categoryService := service.NewCategoryService(dataManager, storeService)
 	itemService := service.NewItemService(categoryService, dataManager, storeService)
 
@@ -37,27 +37,22 @@ func main() {
 
 	v1 := e.Group("/v1")
 
-	// Implementação Realizada + Testes de Integração!
+	// Implementado + Teste = Finalizado
 
-	v1.GET("/stores", storeController.FindAll)
-	v1.GET("/stores/:store-uuid", storeController.FindAll)
-	v1.POST("/stores", storeController.Create) // OK
+	v1.GET("/stores", storeController.FindAll)                // Implementado + Teste
+	v1.GET("/stores/:store-uuid", storeController.FindByUUID) // Implementado + Teste
+	v1.POST("/stores", storeController.Create)                // Implementado + Teste
 
-	v1.GET("/:store-uuid/categories", categoryController.FindByStoreUUID)
-	v1.GET("/:store-uuid/categories/:category-uuid", categoryController.FindByStoreUUID)
-	v1.POST("/:store-uuid/categories", categoryController.Create)
+	v1.GET("/stores/:store-uuid/categories", categoryController.FindByStoreUUID)           // Implementado
+	v1.GET("/stores/:store-uuid/categories/:category-uuid", categoryController.FindByUUID) // Implementado
+	v1.POST("/stores/:store-uuid/categories", categoryController.Create)                   // Implementado
 
-	v1.GET("/:store-uuid/items", itemController.FindAll)
-	v1.GET("/:store-uuid/categories/:category-uuid/items", itemController.FindAll)
-	v1.POST("/:store-uuid/items", itemController.Create)
+	v1.GET("/stores/:store-uuid/items", itemController.FindAll) // Implementado
+	v1.POST("/stores/:store-uuid/items", itemController.Create) // Implementado
 
-	v1.GET("/:store-uuid/orders", itemController.Create)
-	v1.GET("/:store-uuid/orders/:order-uuid", itemController.Create)
-	v1.GET("/orders", itemController.Create)
-	v1.GET("/orders/:order-uuid", itemController.Create)
-	v1.POST("/orders", itemController.Create)
-
-	// appGroup := v1.Group("/app")
+	// v1.GET("/orders", orderController.FindAll)
+	// v1.GET("/orders/:order-uuid", orderController.FindByUUID)
+	// v1.POST("/orders", orderController.Create)
 
 	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 

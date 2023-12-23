@@ -1,6 +1,9 @@
 package service
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sbrunettajr/ifoody-api/domain/constant"
+)
 
 type MetricsService struct {
 	ordersTotal   prometheus.Counter
@@ -10,7 +13,7 @@ type MetricsService struct {
 func NewMetricsService() MetricsService {
 	ordersTotal := prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "orders_total",
+			Name: constant.OrdersTotal,
 			Help: "Total of orders",
 		},
 	)
@@ -18,7 +21,7 @@ func NewMetricsService() MetricsService {
 
 	requestsTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "http_requests_total",
+			Name: constant.HTTPRequestsTotal,
 			Help: "Total of HTTP requests",
 		},
 		[]string{"method", "path", "statusCode"},

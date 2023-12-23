@@ -46,7 +46,21 @@ func (c storeController) FindAll(ctx echo.Context) error {
 		return err
 	}
 
-	responseBody := viewmodel.ParseFindAllStoresReponse(stores)
+	responseBody := viewmodel.ParseFindAllStoresResponse(stores)
+
+	return ctx.JSON(http.StatusOK, responseBody)
+}
+
+func (c storeController) FindByUUID(ctx echo.Context) error {
+	context := ctx.Request().Context()
+	storeUUID := ctx.Param("store-uuid")
+
+	store, err := c.storeService.FindByUUID(context, storeUUID)
+	if err != nil {
+		return err
+	}
+
+	responseBody := viewmodel.ParseFindByUUIDStoreResponse(store)
 
 	return ctx.JSON(http.StatusOK, responseBody)
 }

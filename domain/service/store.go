@@ -9,21 +9,24 @@ import (
 )
 
 type StoreService struct {
-	dataManager repository.DataManager
+	dataManager    repository.DataManager
+	metricsService MetricsService
 }
 
 func NewStoreService(
 	dataManager repository.DataManager,
+	metricsService MetricsService,
 ) StoreService {
 	return StoreService{
-		dataManager: dataManager,
+		dataManager:    dataManager,
+		metricsService: metricsService,
 	}
 }
 
 func (s StoreService) Create(context context.Context, store entity.Store) error {
 	store.UUID = uuid.NewString()
 
-	err := s.dataManager.Store().Create(context, store)
+	_, err := s.dataManager.Store().Create(context, store)
 	if err != nil {
 		return err
 	}

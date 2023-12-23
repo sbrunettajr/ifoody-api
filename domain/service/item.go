@@ -27,11 +27,7 @@ func NewItemService(
 }
 
 func (s ItemService) Create(context context.Context, item entity.Item) error {
-	category, err := s.categoryService.FindByUUID(context, item.Category.UUID)
-	if err != nil {
-		return err
-	}
-	item.Category = category
+	item.UUID = uuid.NewString()
 
 	store, err := s.storeService.FindByUUID(context, item.Store.UUID)
 	if err != nil {
@@ -39,7 +35,11 @@ func (s ItemService) Create(context context.Context, item entity.Item) error {
 	}
 	item.Store = store
 
-	item.UUID = uuid.NewString()
+	category, err := s.categoryService.FindByUUID(context, item.Category.UUID)
+	if err != nil {
+		return err
+	}
+	item.Category = category
 
 	err = s.dataManager.Item().Create(context, item)
 	if err != nil {

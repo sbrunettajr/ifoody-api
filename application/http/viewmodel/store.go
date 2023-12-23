@@ -20,7 +20,7 @@ func (vm CreateStoreRequest) ToEntity() entity.Store {
 	}
 }
 
-type storeResponse struct {
+type StoreResponse struct {
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 	UUID          string    `json:"uuid"`
@@ -29,20 +29,24 @@ type storeResponse struct {
 	CNPJ          string    `json:"cnpj"`
 }
 
-type findAllStoresResponse []storeResponse
+type FindAllStoresResponse []StoreResponse
 
-func ParseFindAllStoresReponse(stores []entity.Store) findAllStoresResponse {
-	storesResponse := make(findAllStoresResponse, 0, len(stores))
+func ParseFindAllStoresResponse(stores []entity.Store) FindAllStoresResponse {
+	storesResponse := make(FindAllStoresResponse, 0, len(stores))
 	for _, store := range stores {
-		storeResponse := storeResponse{
-			CreatedAt:     store.CreatedAt,
-			UpdatedAt:     store.UpdatedAt,
-			UUID:          store.UUID,
-			FantasyName:   store.FantasyName,
-			CorporateName: store.CorporateName,
-			CNPJ:          store.CNPJ,
-		}
+		storeResponse := ParseFindByUUIDStoreResponse(store)
 		storesResponse = append(storesResponse, storeResponse)
 	}
 	return storesResponse
+}
+
+func ParseFindByUUIDStoreResponse(store entity.Store) StoreResponse {
+	return StoreResponse{
+		CreatedAt:     store.CreatedAt,
+		UpdatedAt:     store.UpdatedAt,
+		UUID:          store.UUID,
+		FantasyName:   store.FantasyName,
+		CorporateName: store.CorporateName,
+		CNPJ:          store.CNPJ,
+	}
 }

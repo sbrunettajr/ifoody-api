@@ -68,21 +68,9 @@ func (r categoryMySQLRepository) FindByStoreUUID(context context.Context, storeU
 		return nil, rows.Err()
 	}
 
-	categories := make([]entity.Category, 0)
-	for rows.Next() {
-		var category entity.Category
-		err := rows.Scan(
-			&category.ID,
-			&category.CreatedAt,
-			&category.UpdatedAt,
-			&category.UUID,
-			&category.Name,
-			&category.StoreID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		categories = append(categories, category)
+	categories, err := parseEntities[entity.Category](rows, r.parseEntity)
+	if err != nil {
+		return nil, err
 	}
 	return categories, nil
 }
@@ -100,17 +88,16 @@ func (r categoryMySQLRepository) FindByUUID(context context.Context, UUID string
 		   AND tc.uuid = ?; 
 	`
 
-	row := r.db.QueryRowContext(
-		context,
-		query,
-		UUID,
-	)
-	if row.Err() != nil {
-		return entity.Category{}, row.Err()
+	category, err := findByUUID[entity.Category](context, r.db, query, UUID, r.parseEntity)
+	if err != nil {
+		return entity.Category{}, err
 	}
+	return category, nil
+}
 
+func (r categoryMySQLRepository) parseEntity(scan scanner) (entity.Category, error) {
 	var category entity.Category
-	err := row.Scan(
+	err := scan.Scan(
 		&category.ID,
 		&category.CreatedAt,
 		&category.UpdatedAt,

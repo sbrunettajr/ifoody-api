@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/sbrunettajr/ifoody-api/application/http/viewmodel"
+	"github.com/sbrunettajr/ifoody-api/domain/entity"
 	"github.com/sbrunettajr/ifoody-api/domain/service"
 )
 
@@ -27,8 +28,12 @@ func (c itemController) Create(ctx echo.Context) error {
 	}
 
 	context := ctx.Request().Context()
+	storeUUID := ctx.Param("store-uuid")
 
 	item := requestBody.ToEntity()
+	item.Store = entity.Store{
+		UUID: storeUUID,
+	}
 
 	err := c.itemService.Create(context, item)
 	if err != nil {
@@ -40,7 +45,17 @@ func (c itemController) Create(ctx echo.Context) error {
 func (c itemController) FindAll(ctx echo.Context) error {
 	context := ctx.Request().Context()
 
-	items, err := c.itemService.FindAll(context)
+	categoryUUID := ctx.QueryParam("category-uuid")
+
+	var items []entity.Item
+	var err error
+
+	if categoryUUID == "" {
+		items, err = c.itemService.FindAll(context)
+	} else {
+		items, err = c.itemService.FindByCategoryUUID(context, categoryUUID)
+	}
+
 	if err != nil {
 		return err
 	}
