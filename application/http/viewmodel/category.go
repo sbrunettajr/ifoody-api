@@ -16,17 +16,17 @@ func (vm CreateCategoryRequest) ToEntity() entity.Category {
 	}
 }
 
-type categoryResponse struct {
+type CategoryResponse struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	UUID      string    `json:"uuid"`
 	Name      string    `json:"name"`
 }
 
-type findByStoreUUIDCategoriesResponse []categoryResponse
+type FindByStoreUUIDCategoriesResponse []CategoryResponse
 
-func ParseFindByStoreUUIDCategoriesResponse(categories []entity.Category) findByStoreUUIDCategoriesResponse {
-	categoriesResponse := make(findByStoreUUIDCategoriesResponse, 0, len(categories))
+func ParseFindByStoreUUIDCategoriesResponse(categories []entity.Category) FindByStoreUUIDCategoriesResponse {
+	categoriesResponse := make(FindByStoreUUIDCategoriesResponse, 0, len(categories))
 	for _, category := range categories {
 		categoryResponse := ParseFindByUUIDCategoryResponse(category)
 		categoriesResponse = append(categoriesResponse, categoryResponse)
@@ -34,8 +34,8 @@ func ParseFindByStoreUUIDCategoriesResponse(categories []entity.Category) findBy
 	return categoriesResponse
 }
 
-func ParseFindByUUIDCategoryResponse(category entity.Category) categoryResponse {
-	return categoryResponse{
+func ParseFindByUUIDCategoryResponse(category entity.Category) CategoryResponse {
+	return CategoryResponse{
 		CreatedAt: category.CreatedAt,
 		UpdatedAt: category.UpdatedAt,
 		UUID:      category.UUID,

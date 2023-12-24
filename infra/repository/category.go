@@ -22,14 +22,14 @@ func newCategoryMySQLRepository(
 	}
 }
 
-func (r categoryMySQLRepository) Create(context context.Context, category entity.Category) error {
+func (r categoryMySQLRepository) Create(context context.Context, category entity.Category) (uint32, error) {
 	query := `
 		INSERT 
 		  INTO tb_category(uuid, name, store_id)
 		VALUES (?, ?, ?);  
 	`
 
-	_, err := r.db.ExecContext(
+	result, err := r.db.ExecContext(
 		context,
 		query,
 		category.UUID,
@@ -37,9 +37,34 @@ func (r categoryMySQLRepository) Create(context context.Context, category entity
 		category.Store.ID,
 	)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+
+	categoryID, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return uint32(categoryID), nil
+}
+
+func (r categoryMySQLRepository) FindByID(context context.Context, ID uint32) (entity.Category, error) {
+	query := `
+		SELECT tc.id,
+		       tc.created_at,
+			   tc.updated_at,
+			   tc.uuid,
+			   tc.name,
+			   tc.store_id
+		  FROM tb_category tc 
+		 WHERE tc.deleted_at IS NULL
+		   AND tc.id = ?; 
+	`
+
+	category, err := findByID[entity.Category](context, r.db, query, ID, r.parseEntity)
+	if err != nil {
+		return entity.Category{}, err
+	}
+	return category, nil
 }
 
 func (r categoryMySQLRepository) FindByStoreUUID(context context.Context, storeUUID string) ([]entity.Category, error) {

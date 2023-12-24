@@ -21,7 +21,7 @@ func main() {
 
 	metricsService := service.NewMetricsService()
 
-	storeService := service.NewStoreService(dataManager, metricsService)
+	storeService := service.NewStoreService(dataManager)
 	categoryService := service.NewCategoryService(dataManager, storeService)
 	itemService := service.NewItemService(categoryService, dataManager, storeService)
 
@@ -43,9 +43,9 @@ func main() {
 	v1.GET("/stores/:store-uuid", storeController.FindByUUID) // Implementado + Teste
 	v1.POST("/stores", storeController.Create)                // Implementado + Teste
 
-	v1.GET("/stores/:store-uuid/categories", categoryController.FindByStoreUUID)           // Implementado
-	v1.GET("/stores/:store-uuid/categories/:category-uuid", categoryController.FindByUUID) // Implementado
-	v1.POST("/stores/:store-uuid/categories", categoryController.Create)                   // Implementado
+	v1.GET("/stores/:store-uuid/categories", categoryController.FindByStoreUUID)           // Implementado + Teste
+	v1.GET("/stores/:store-uuid/categories/:category-uuid", categoryController.FindByUUID) // Implementado + Teste
+	v1.POST("/stores/:store-uuid/categories", categoryController.Create)                   // Implementado + Teste
 
 	v1.GET("/stores/:store-uuid/items", itemController.FindAll) // Implementado
 	v1.POST("/stores/:store-uuid/items", itemController.Create) // Implementado

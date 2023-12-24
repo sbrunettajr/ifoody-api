@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 
@@ -21,6 +22,7 @@ func createStore(CNPJ string) (entity.Store, error) {
 	context := context.Background()
 
 	r := repository.NewDataManager(d)
+
 	storeID, err := r.Store().Create(context, store)
 	if err != nil {
 		return entity.Store{}, err
@@ -32,6 +34,56 @@ func createStore(CNPJ string) (entity.Store, error) {
 	}
 
 	return store, nil
+}
+
+func createCategory(store entity.Store) (entity.Category, error) {
+	category := entity.Category{
+		Name:  uuid.NewString(),
+		UUID:  uuid.NewString(),
+		Store: store,
+	}
+
+	context := context.Background()
+
+	r := repository.NewDataManager(d)
+
+	categoryID, err := r.Category().Create(context, category)
+	if err != nil {
+		return entity.Category{}, err
+	}
+
+	category, err = r.Category().FindByID(context, categoryID)
+	if err != nil {
+		return entity.Category{}, err
+	}
+
+	return category, nil
+}
+
+func createItem(store entity.Store, category entity.Category) (entity.Item, error) {
+	item := entity.Item{
+		Name:        uuid.NewString(),
+		Description: uuid.NewString(),
+		Price:       rand.Float64(),
+		Category:    category,
+		Store:       store,
+	}
+
+	context := context.Background()
+
+	r := repository.NewDataManager(d)
+
+	itemID, err := r.Item().Create(context, item)
+	if err != nil {
+		return entity.Item{}, err
+	}
+
+	item, err = r.Item().FindByID(context, itemID)
+	if err != nil {
+		return entity.Item{}, err
+	}
+
+	return item, nil
 }
 
 func newRequest(method, target string, body io.Reader) (*http.Request, *httptest.ResponseRecorder, echo.Context) {

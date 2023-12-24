@@ -51,11 +51,12 @@ func (c itemController) FindAll(ctx echo.Context) error {
 	var err error
 
 	if categoryUUID == "" {
-		items, err = c.itemService.FindAll(context)
+		storeUUID := ctx.Param("store-uuid")
+
+		items, err = c.itemService.FindByStoreUUID(context, storeUUID)
 	} else {
 		items, err = c.itemService.FindByCategoryUUID(context, categoryUUID)
 	}
-
 	if err != nil {
 		return err
 	}

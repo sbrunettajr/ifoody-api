@@ -9,17 +9,14 @@ import (
 )
 
 type StoreService struct {
-	dataManager    repository.DataManager
-	metricsService MetricsService
+	dataManager repository.DataManager
 }
 
 func NewStoreService(
 	dataManager repository.DataManager,
-	metricsService MetricsService,
 ) StoreService {
 	return StoreService{
-		dataManager:    dataManager,
-		metricsService: metricsService,
+		dataManager: dataManager,
 	}
 }
 

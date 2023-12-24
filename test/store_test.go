@@ -38,11 +38,9 @@ func TestCreateStore(t *testing.T) {
 	)
 
 	_, rec, ctx := newRequest(http.MethodPost, "/v1/stores", strings.NewReader(requestBody))
+
 	dataManager := repository.NewDataManager(d)
-
-	metricsService := service.NewMetricsService()
-
-	storeService := service.NewStoreService(dataManager, metricsService)
+	storeService := service.NewStoreService(dataManager)
 	storeController := controller.NewStoreController(storeService)
 
 	err := storeController.Create(ctx)
@@ -65,10 +63,7 @@ func TestFindAllStores(t *testing.T) {
 	_, rec, ctx := newRequest(http.MethodGet, "/v1/stores", nil)
 
 	dataManager := repository.NewDataManager(d)
-
-	metricsService := service.NewMetricsService()
-
-	storeService := service.NewStoreService(dataManager, metricsService)
+	storeService := service.NewStoreService(dataManager)
 	storeController := controller.NewStoreController(storeService)
 
 	err = storeController.FindAll(ctx)
@@ -97,10 +92,7 @@ func TestFindStoreByUUID(t *testing.T) {
 	ctx.SetParamValues(store.UUID)
 
 	dataManager := repository.NewDataManager(d)
-
-	metricsService := service.NewMetricsService()
-
-	storeService := service.NewStoreService(dataManager, metricsService)
+	storeService := service.NewStoreService(dataManager)
 	storeController := controller.NewStoreController(storeService)
 
 	err = storeController.FindByUUID(ctx)

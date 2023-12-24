@@ -32,7 +32,7 @@ func (s CategoryService) Create(context context.Context, category entity.Categor
 	}
 	category.Store = store
 
-	err = s.dataManager.Category().Create(context, category)
+	_, err = s.dataManager.Category().Create(context, category)
 	if err != nil {
 		return err
 	}

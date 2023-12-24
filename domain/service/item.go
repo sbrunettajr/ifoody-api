@@ -41,15 +41,31 @@ func (s ItemService) Create(context context.Context, item entity.Item) error {
 	}
 	item.Category = category
 
-	err = s.dataManager.Item().Create(context, item)
+	_, err = s.dataManager.Item().Create(context, item)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s ItemService) FindAll(context context.Context) ([]entity.Item, error) {
-	items, err := s.dataManager.Item().FindAll(context)
+func (s ItemService) FindByCategoryUUID(context context.Context, categoryUUID string) ([]entity.Item, error) {
+	items, err := s.dataManager.Item().FindByCategoryUUID(context, categoryUUID)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (s ItemService) FindByID(context context.Context, ID uint32) (entity.Item, error) {
+	item, err := s.dataManager.Item().FindByID(context, ID)
+	if err != nil {
+		return entity.Item{}, err
+	}
+	return item, nil
+}
+
+func (s ItemService) FindByStoreUUID(context context.Context, storeUUID string) ([]entity.Item, error) {
+	items, err := s.dataManager.Item().FindByStoreUUID(context, storeUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +78,6 @@ func (s ItemService) FindByUUID(context context.Context, UUID string) (entity.It
 		return entity.Item{}, err
 	}
 	return item, nil
-}
-
-func (s ItemService) FindByCategoryUUID(context context.Context, categoryUUID string) ([]entity.Item, error) {
-	items, err := s.dataManager.Item().FindByCategoryUUID(context, categoryUUID)
-	if err != nil {
-		return nil, err
-	}
-	return items, nil
 }
 
 func (s ItemService) Delete(context context.Context, UUID string) error {

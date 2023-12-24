@@ -7,9 +7,10 @@ import (
 )
 
 type ItemRepository interface {
-	Create(context context.Context, item entity.Item) error
-	FindAll(context context.Context) ([]entity.Item, error)
+	Create(context context.Context, item entity.Item) (uint32, error)
 	FindByCategoryUUID(context context.Context, categoryUUID string) ([]entity.Item, error)
+	FindByID(context context.Context, itemID uint32) (entity.Item, error)
+	FindByStoreUUID(context context.Context, storeUUID string) ([]entity.Item, error)
 	FindByUUID(context context.Context, UUID string) (entity.Item, error)
 	Delete(context context.Context, UUID string) error
 	Update(context context.Context, item entity.Item) error

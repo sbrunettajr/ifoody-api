@@ -22,14 +22,14 @@ func newItemMySQLRepository(
 	}
 }
 
-func (r itemMySQLRepository) Create(context context.Context, item entity.Item) error {
+func (r itemMySQLRepository) Create(context context.Context, item entity.Item) (uint32, error) {
 	query := `
 		INSERT 
 		  INTO tb_item(uuid, name, description, price, category_id, store_id)
 		VALUES (?, ?, ?, ?, ?, ?);  
 	`
 
-	_, err := r.db.ExecContext(
+	result, err := r.db.ExecContext(
 		context,
 		query,
 		item.UUID,
@@ -40,12 +40,17 @@ func (r itemMySQLRepository) Create(context context.Context, item entity.Item) e
 		item.Store.ID,
 	)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return uint32(id), nil
 }
 
-func (r itemMySQLRepository) FindAll(context context.Context) ([]entity.Item, error) {
+func (r itemMySQLRepository) FindByStoreUUID(context context.Context, storeUUID string) ([]entity.Item, error) {
 	query := `
 		SELECT ti.id,
 		       ti.created_at,
@@ -57,12 +62,15 @@ func (r itemMySQLRepository) FindAll(context context.Context) ([]entity.Item, er
 			   ti.category_id,
 			   ti.store_id 
 		  FROM tb_item ti 
-		 WHERE ti.deleted_at IS NULL;
+		  JOIN tb_store ts ON ts.id = ti.store_id
+		 WHERE ti.deleted_at IS NULL
+		   AND ts.uuid = ?;
 	`
 
 	rows, err := r.db.QueryContext(
 		context,
 		query,
+		storeUUID,
 	)
 	if rows.Err() != nil {
 		return nil, rows.Err()
@@ -131,6 +139,29 @@ func (r itemMySQLRepository) FindByUUID(context context.Context, UUID string) (e
 	`
 
 	item, err := findByUUID[entity.Item](context, r.db, query, UUID, r.parseEntity)
+	if err != nil {
+		return entity.Item{}, err
+	}
+	return item, nil
+}
+
+func (r itemMySQLRepository) FindByID(context context.Context, ID uint32) (entity.Item, error) {
+	query := `
+		SELECT ti.id,
+		       ti.created_at,
+			   ti.updated_at,
+			   ti.uuid,
+			   ti.name,
+			   ti.description,
+			   ti.price,
+			   ti.category_id,
+			   ti.store_id 
+		  FROM tb_item ti 
+		 WHERE ti.deleted_at IS NULL
+		   AND ti.id = ?; 
+	`
+
+	item, err := findByID[entity.Item](context, r.db, query, ID, r.parseEntity)
 	if err != nil {
 		return entity.Item{}, err
 	}

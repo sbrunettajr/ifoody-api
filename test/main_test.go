@@ -8,7 +8,7 @@ import (
 	"github.com/sbrunettajr/ifoody-api/infra/db"
 )
 
-var d *sql.DB
+var d *sql.DB // Rename
 
 func TestMain(m *testing.M) {
 	var err error

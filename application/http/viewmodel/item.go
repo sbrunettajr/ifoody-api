@@ -33,10 +33,10 @@ type itemResponse struct {
 	Price       float64   `json:"price"`
 }
 
-type findAllItemsResponse []itemResponse
+type FindAllItemsResponse []itemResponse
 
-func ParseFindAllItemsResponse(items []entity.Item) findAllItemsResponse {
-	itemsResponse := make(findAllItemsResponse, 0, len(items))
+func ParseFindAllItemsResponse(items []entity.Item) FindAllItemsResponse {
+	itemsResponse := make(FindAllItemsResponse, 0, len(items))
 	for _, item := range items {
 		itemResponse := itemResponse{
 			CreatedAt:   item.CreatedAt,
