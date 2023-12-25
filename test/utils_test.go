@@ -73,7 +73,7 @@ func createItem(store entity.Store, category entity.Category) (entity.Item, erro
 
 	r := repository.NewDataManager(d)
 
-	itemID, err := r.Item().Create(context, item)
+	itemID, err := r.Item().Create(context, item, nil)
 	if err != nil {
 		return entity.Item{}, err
 	}
