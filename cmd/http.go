@@ -24,10 +24,12 @@ func main() {
 	storeService := service.NewStoreService(dataManager)
 	categoryService := service.NewCategoryService(dataManager, storeService)
 	itemService := service.NewItemService(categoryService, dataManager, storeService)
+	itemsFileService := service.NewItemsFileService(categoryService, dataManager, storeService)
 
 	storeController := controller.NewStoreController(storeService)
 	categoryController := controller.NewCategoryController(categoryService)
 	itemController := controller.NewItemController(itemService)
+	itemsFileController := controller.NewItemsFileController(itemsFileService)
 
 	e := echo.New()
 
@@ -47,8 +49,10 @@ func main() {
 	v1.GET("/stores/:store-uuid/categories/:category-uuid", categoryController.FindByUUID) // Implementado + Teste
 	v1.POST("/stores/:store-uuid/categories", categoryController.Create)                   // Implementado + Teste
 
-	v1.GET("/stores/:store-uuid/items", itemController.FindAll) // Implementado
-	v1.POST("/stores/:store-uuid/items", itemController.Create) // Implementado
+	v1.GET("/stores/:store-uuid/items", itemController.FindAll) // Implementado + Teste
+	v1.POST("/stores/:store-uuid/items", itemController.Create) // Implementado + Teste
+
+	v1.POST("/stores/:store-uuid/items-file", itemsFileController.Upload) // Implementado
 
 	// v1.GET("/orders", orderController.FindAll)
 	// v1.GET("/orders/:order-uuid", orderController.FindByUUID)

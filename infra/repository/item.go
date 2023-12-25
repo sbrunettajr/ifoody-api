@@ -22,15 +22,23 @@ func newItemMySQLRepository(
 	}
 }
 
-func (r itemMySQLRepository) Create(context context.Context, item entity.Item) (uint32, error) {
+func (r itemMySQLRepository) Create(ctx context.Context, item entity.Item, tx *sql.Tx) (uint32, error) {
 	query := `
 		INSERT 
 		  INTO tb_item(uuid, name, description, price, category_id, store_id)
 		VALUES (?, ?, ?, ?, ?, ?);  
 	`
 
-	result, err := r.db.ExecContext(
-		context,
+	var function func(context context.Context, query string, args ...any) (sql.Result, error)
+
+	if tx != nil {
+		function = tx.ExecContext
+	} else {
+		function = r.db.ExecContext
+	}
+
+	result, err := function(
+		ctx,
 		query,
 		item.UUID,
 		item.Name,

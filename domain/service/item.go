@@ -41,7 +41,7 @@ func (s ItemService) Create(context context.Context, item entity.Item) error {
 	}
 	item.Category = category
 
-	_, err = s.dataManager.Item().Create(context, item)
+	_, err = s.dataManager.Item().Create(context, item, nil)
 	if err != nil {
 		return err
 	}

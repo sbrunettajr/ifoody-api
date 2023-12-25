@@ -20,6 +20,10 @@ func NewDataManager(
 	}
 }
 
+func (d dataManager) Begin() (*sql.Tx, error) {
+	return d.db.Begin()
+}
+
 func (d dataManager) Category() repository.CategoryRepository {
 	return newCategoryMySQLRepository(d.db)
 }
