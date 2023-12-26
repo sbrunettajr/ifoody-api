@@ -1,7 +1,9 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"strconv"
 
@@ -115,4 +117,43 @@ func (s ItemsFileService) getCategoriesMap(categories []entity.Category) map[str
 		r[category.Name] = category
 	}
 	return r
+}
+
+func (s ItemsFileService) Download(context context.Context, isTemplate bool) ([]byte, error) {
+	file := excelize.NewFile()
+	defer file.Close() // Handle error?
+
+	index := file.GetActiveSheetIndex()
+	source := file.GetSheetName(index)
+
+	err := file.SetSheetName(source, constant.ItemsFileSheetName)
+	if err != nil {
+		return nil, err
+	}
+
+	s.setLabels(file)
+
+	if !isTemplate {
+		fmt.Println(isTemplate)
+	}
+
+	var buffer bytes.Buffer
+	file.Write(&buffer)
+
+	return buffer.Bytes(), nil
+}
+
+func (s ItemsFileService) setLabels(file *excelize.File) { // Handle error?
+	style, _ := file.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+		},
+	})
+
+	file.SetCellValue(constant.ItemsFileSheetName, "A1", constant.ItemsFileLabelName)
+	file.SetCellValue(constant.ItemsFileSheetName, "B1", constant.ItemsFileLabelDescription)
+	file.SetCellValue(constant.ItemsFileSheetName, "C1", constant.ItemsFileLabelPrice)
+	file.SetCellValue(constant.ItemsFileSheetName, "D1", constant.ItemsFileLabelCategory)
+
+	file.SetCellStyle(constant.ItemsFileSheetName, "A1", "D1", style)
 }

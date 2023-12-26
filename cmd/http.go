@@ -52,7 +52,8 @@ func main() {
 	v1.GET("/stores/:store-uuid/items", itemController.FindAll) // Implementado + Teste
 	v1.POST("/stores/:store-uuid/items", itemController.Create) // Implementado + Teste
 
-	v1.POST("/stores/:store-uuid/items-file", itemsFileController.Upload) // Implementado
+	v1.GET("/stores/:store-uuid/items-file", itemsFileController.Download) // Implementado
+	v1.POST("/stores/:store-uuid/items-file", itemsFileController.Upload)  // Implementado
 
 	// v1.GET("/orders", orderController.FindAll)
 	// v1.GET("/orders/:order-uuid", orderController.FindByUUID)

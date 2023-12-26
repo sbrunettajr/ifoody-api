@@ -6,3 +6,7 @@ const (
 	ItemsFileLabelPrice       = "Price"
 	ItemsFileLabelCategory    = "Category"
 )
+
+const (
+	ItemsFileSheetName = "Items"
+)
