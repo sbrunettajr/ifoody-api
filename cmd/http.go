@@ -24,7 +24,7 @@ func main() {
 	storeService := service.NewStoreService(dataManager)
 	categoryService := service.NewCategoryService(dataManager, storeService)
 	itemService := service.NewItemService(categoryService, dataManager, storeService)
-	itemsFileService := service.NewItemsFileService(categoryService, dataManager, storeService)
+	itemsFileService := service.NewItemsFileService(categoryService, dataManager, itemService, storeService)
 
 	storeController := controller.NewStoreController(storeService)
 	categoryController := controller.NewCategoryController(categoryService)

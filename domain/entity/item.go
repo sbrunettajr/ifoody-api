@@ -3,6 +3,7 @@ package entity
 type Item struct {
 	base
 	UUID        string
+	Code        string
 	Name        string
 	Description string
 	Price       float64 // Fix: monetary value!

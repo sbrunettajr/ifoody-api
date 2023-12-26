@@ -46,6 +46,7 @@ func (c itemsFileController) Upload(ctx echo.Context) error {
 
 func (c itemsFileController) Download(ctx echo.Context) error {
 	context := ctx.Request().Context()
+	storeUUID := ctx.Param("store-uuid")
 	queryParam := ctx.QueryParam("is-template")
 
 	var isTemplate bool
@@ -57,7 +58,7 @@ func (c itemsFileController) Download(ctx echo.Context) error {
 		}
 	}
 
-	bytes, err := c.itemsFileService.Download(context, isTemplate)
+	bytes, err := c.itemsFileService.Download(context, storeUUID, isTemplate)
 	if err != nil {
 		return err
 	}

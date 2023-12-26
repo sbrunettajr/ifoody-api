@@ -17,17 +17,20 @@ import (
 type ItemsFileService struct {
 	categoryService CategoryService
 	dataManager     repository.DataManager
+	itemService     ItemService
 	storeService    StoreService
 }
 
 func NewItemsFileService(
 	categoryService CategoryService,
 	dataManager repository.DataManager,
+	itemService ItemService,
 	storeService StoreService,
 ) ItemsFileService {
 	return ItemsFileService{
 		categoryService: categoryService,
 		dataManager:     dataManager,
+		itemService:     itemService,
 		storeService:    storeService,
 	}
 }
@@ -70,6 +73,7 @@ func (s ItemsFileService) Upload(context context.Context, storeUUID string, r io
 		}
 
 		item := entity.Item{
+			Code:        row[cols[constant.ItemsFileLabelCode]],
 			Name:        row[cols[constant.ItemsFileLabelName]],
 			Description: row[cols[constant.ItemsFileLabelDescription]],
 			UUID:        uuid.NewString(),
@@ -88,6 +92,7 @@ func (s ItemsFileService) Upload(context context.Context, storeUUID string, r io
 	defer tx.Rollback()
 
 	for _, item := range items {
+		// Bulk Insert
 		_, err = s.dataManager.Item().Create(context, item, tx)
 		if err != nil {
 			return err
@@ -119,7 +124,7 @@ func (s ItemsFileService) getCategoriesMap(categories []entity.Category) map[str
 	return r
 }
 
-func (s ItemsFileService) Download(context context.Context, isTemplate bool) ([]byte, error) {
+func (s ItemsFileService) Download(context context.Context, storeUUID string, isTemplate bool) ([]byte, error) {
 	file := excelize.NewFile()
 	defer file.Close() // Handle error?
 
@@ -134,13 +139,34 @@ func (s ItemsFileService) Download(context context.Context, isTemplate bool) ([]
 	s.setLabels(file)
 
 	if !isTemplate {
-		fmt.Println(isTemplate)
+		items, err := s.itemService.FindByStoreUUID(context, storeUUID)
+		if err != nil {
+			return nil, err
+		}
+
+		for i, item := range items {
+			category, err := s.categoryService.FindByID(context, item.CategoryID)
+			if err != nil {
+				return nil, err
+			}
+			item.Category = category
+
+			s.setRow(file, i+2, item)
+		}
 	}
 
 	var buffer bytes.Buffer
 	file.Write(&buffer)
 
 	return buffer.Bytes(), nil
+}
+
+func (s ItemsFileService) setRow(file *excelize.File, index int, item entity.Item) {
+	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("A%d", index), item.Code) // Como concatenar?
+	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("B%d", index), item.Name)
+	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("C%d", index), item.Description)
+	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("D%d", index), item.Price)
+	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("E%d", index), item.Category.Name)
 }
 
 func (s ItemsFileService) setLabels(file *excelize.File) { // Handle error?
@@ -150,10 +176,11 @@ func (s ItemsFileService) setLabels(file *excelize.File) { // Handle error?
 		},
 	})
 
-	file.SetCellValue(constant.ItemsFileSheetName, "A1", constant.ItemsFileLabelName)
-	file.SetCellValue(constant.ItemsFileSheetName, "B1", constant.ItemsFileLabelDescription)
-	file.SetCellValue(constant.ItemsFileSheetName, "C1", constant.ItemsFileLabelPrice)
-	file.SetCellValue(constant.ItemsFileSheetName, "D1", constant.ItemsFileLabelCategory)
+	file.SetCellValue(constant.ItemsFileSheetName, "A1", constant.ItemsFileLabelCode)
+	file.SetCellValue(constant.ItemsFileSheetName, "B1", constant.ItemsFileLabelName)
+	file.SetCellValue(constant.ItemsFileSheetName, "C1", constant.ItemsFileLabelDescription)
+	file.SetCellValue(constant.ItemsFileSheetName, "D1", constant.ItemsFileLabelPrice)
+	file.SetCellValue(constant.ItemsFileSheetName, "E1", constant.ItemsFileLabelCategory)
 
-	file.SetCellStyle(constant.ItemsFileSheetName, "A1", "D1", style)
+	file.SetCellStyle(constant.ItemsFileSheetName, "A1", "E1", style)
 }

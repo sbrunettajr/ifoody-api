@@ -25,8 +25,8 @@ func newItemMySQLRepository(
 func (r itemMySQLRepository) Create(ctx context.Context, item entity.Item, tx *sql.Tx) (uint32, error) {
 	query := `
 		INSERT 
-		  INTO tb_item(uuid, name, description, price, category_id, store_id)
-		VALUES (?, ?, ?, ?, ?, ?);  
+		  INTO tb_item(uuid, code, name, description, price, category_id, store_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?);
 	`
 
 	var function func(context context.Context, query string, args ...any) (sql.Result, error)
@@ -41,6 +41,7 @@ func (r itemMySQLRepository) Create(ctx context.Context, item entity.Item, tx *s
 		ctx,
 		query,
 		item.UUID,
+		item.Code,
 		item.Name,
 		item.Description,
 		item.Price,
@@ -64,6 +65,7 @@ func (r itemMySQLRepository) FindByStoreUUID(context context.Context, storeUUID 
 		       ti.created_at,
 			   ti.updated_at,
 			   ti.uuid,
+			   ti.code,
 			   ti.name,
 			   ti.description,
 			   ti.price,
@@ -100,6 +102,7 @@ func (r itemMySQLRepository) FindByCategoryUUID(context context.Context, categor
 		       ti.created_at,
 			   ti.updated_at,
 			   ti.uuid,
+			   ti.code,
 			   ti.name,
 			   ti.description,
 			   ti.price,
@@ -136,6 +139,7 @@ func (r itemMySQLRepository) FindByUUID(context context.Context, UUID string) (e
 		       ti.created_at,
 			   ti.updated_at,
 			   ti.uuid,
+			   ti.code,
 			   ti.name,
 			   ti.description,
 			   ti.price,
@@ -159,6 +163,7 @@ func (r itemMySQLRepository) FindByID(context context.Context, ID uint32) (entit
 		       ti.created_at,
 			   ti.updated_at,
 			   ti.uuid,
+			   ti.code,
 			   ti.name,
 			   ti.description,
 			   ti.price,
@@ -197,7 +202,8 @@ func (r itemMySQLRepository) Delete(context context.Context, UUID string) error 
 func (r itemMySQLRepository) Update(context context.Context, item entity.Item) error {
 	query := `
 		UPDATE tb_item ti
-		   SET ti.name = ?,
+		   SET ti.code = ?,
+		       ti.name = ?,
 			   ti.description = ?,
 			   ti.price = ?,
 			   ti.category_id = ?
@@ -222,6 +228,7 @@ func (r itemMySQLRepository) parseEntity(scan scanner) (entity.Item, error) {
 		&item.CreatedAt,
 		&item.UpdatedAt,
 		&item.UUID,
+		&item.Code,
 		&item.Name,
 		&item.Description,
 		&item.Price,

@@ -47,6 +47,14 @@ func (s CategoryService) FindByStoreUUID(context context.Context, storeUUID stri
 	return categories, nil
 }
 
+func (s CategoryService) FindByID(context context.Context, ID uint32) (entity.Category, error) {
+	category, err := s.dataManager.Category().FindByID(context, ID)
+	if err != nil {
+		return entity.Category{}, err
+	}
+	return category, nil
+}
+
 func (s CategoryService) FindByUUID(context context.Context, UUID string) (entity.Category, error) {
 	category, err := s.dataManager.Category().FindByUUID(context, UUID)
 	if err != nil {

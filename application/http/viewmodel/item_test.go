@@ -17,6 +17,7 @@ func TestCreateItemRequest_ToEntity(t *testing.T) {
 	t.Parallel()
 
 	vm := CreateItemRequest{
+		Code:         uuid.NewString(),
 		Name:         uuid.NewString(),
 		Description:  uuid.NewString(),
 		Price:        rand.Float64(),
@@ -25,6 +26,7 @@ func TestCreateItemRequest_ToEntity(t *testing.T) {
 
 	item := vm.ToEntity()
 
+	assert.Equal(t, vm.Code, item.Code)
 	assert.Equal(t, vm.Name, item.Name)
 	assert.Equal(t, vm.Description, item.Description)
 	assert.Equal(t, vm.Price, item.Price)
@@ -36,12 +38,14 @@ func TestParseFindAllItemsResponse(t *testing.T) {
 
 	items := []entity.Item{
 		{
+			Code:        uuid.NewString(),
 			UUID:        uuid.NewString(),
 			Name:        uuid.NewString(),
 			Description: uuid.NewString(),
 			Price:       rand.Float64(),
 		},
 		{
+			Code:        uuid.NewString(),
 			UUID:        uuid.NewString(),
 			Name:        uuid.NewString(),
 			Description: uuid.NewString(),
@@ -63,6 +67,7 @@ func TestParseFindAllItemsResponse(t *testing.T) {
 		assert.Equal(t, items[i].CreatedAt, itemResponse.CreatedAt)
 		assert.Equal(t, items[i].UpdatedAt, itemResponse.UpdatedAt)
 		assert.Equal(t, items[i].UUID, itemResponse.UUID)
+		assert.Equal(t, items[i].Code, itemResponse.Code)
 		assert.Equal(t, items[i].Name, itemResponse.Name)
 		assert.Equal(t, items[i].Description, itemResponse.Description)
 		assert.Equal(t, items[i].Price, itemResponse.Price)

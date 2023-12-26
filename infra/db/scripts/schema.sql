@@ -28,6 +28,7 @@ CREATE TABLE tb_item(
     updated_at DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
     deleted_at DATETIME,
     uuid VARCHAR(36) NOT NULL,
+    code VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT NOT NULL,
     price DOUBLE NOT NULL,

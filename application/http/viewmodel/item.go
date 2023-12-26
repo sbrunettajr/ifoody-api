@@ -7,6 +7,7 @@ import (
 )
 
 type CreateItemRequest struct {
+	Code         string  `json:"code"`
 	Name         string  `json:"name"`
 	Description  string  `json:"description"`
 	Price        float64 `json:"price"`
@@ -15,6 +16,7 @@ type CreateItemRequest struct {
 
 func (vm CreateItemRequest) ToEntity() entity.Item {
 	return entity.Item{
+		Code:        vm.Code,
 		Name:        vm.Name,
 		Description: vm.Description,
 		Price:       vm.Price,
@@ -28,6 +30,7 @@ type itemResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 	UUID        string    `json:"uuid"`
+	Code        string    `json:"code"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Price       float64   `json:"price"`
@@ -42,6 +45,7 @@ func ParseFindAllItemsResponse(items []entity.Item) FindAllItemsResponse {
 			CreatedAt:   item.CreatedAt,
 			UpdatedAt:   item.UpdatedAt,
 			UUID:        item.UUID,
+			Code:        item.Code,
 			Name:        item.Name,
 			Description: item.Description,
 			Price:       item.Price,
