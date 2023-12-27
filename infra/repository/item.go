@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"github.com/sbrunettajr/ifoody-api/domain/entity"
 	"github.com/sbrunettajr/ifoody-api/domain/repository"
@@ -22,22 +24,49 @@ func newItemMySQLRepository(
 	}
 }
 
-func (r itemMySQLRepository) Create(ctx context.Context, item entity.Item, tx *sql.Tx) (uint32, error) {
+func (r itemMySQLRepository) BulkInsert(context context.Context, items []entity.Item) error {
 	query := `
-		INSERT 
+		INSERT
+		  INTO tb_item(uuid, code, name, description, price, category_id, store_id)
+		VALUES %s
+	`
+
+	if len(items) == 0 {
+		return nil
+	}
+
+	values := strings.TrimSuffix(strings.Repeat("(?, ?, ?, ?, ?, ?, ?), ", len(items)), ",")
+	query = fmt.Sprintf(query, values)
+
+	var args []any
+	for _, item := range items {
+		args = append(
+			args,
+			item.UUID,
+			item.Code,
+			item.Name,
+			item.Description,
+			item.Price,
+			item.Category.ID,
+			item.Store.ID,
+		)
+	}
+
+	_, err := r.db.ExecContext(context, query, args)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r itemMySQLRepository) Create(ctx context.Context, item entity.Item) (uint32, error) {
+	query := `
+		INSERT
 		  INTO tb_item(uuid, code, name, description, price, category_id, store_id)
 		VALUES (?, ?, ?, ?, ?, ?, ?);
 	`
 
-	var function func(context context.Context, query string, args ...any) (sql.Result, error)
-
-	if tx != nil {
-		function = tx.ExecContext
-	} else {
-		function = r.db.ExecContext
-	}
-
-	result, err := function(
+	result, err := r.db.ExecContext(
 		ctx,
 		query,
 		item.UUID,
