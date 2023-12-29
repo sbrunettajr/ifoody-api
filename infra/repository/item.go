@@ -35,7 +35,7 @@ func (r itemMySQLRepository) BulkInsert(context context.Context, items []entity.
 		return nil
 	}
 
-	values := strings.TrimSuffix(strings.Repeat("(?, ?, ?, ?, ?, ?, ?), ", len(items)), ",")
+	values := strings.TrimSuffix(strings.Repeat("(?, ?, ?, ?, ?, ?, ?), ", len(items)), ", ")
 	query = fmt.Sprintf(query, values)
 
 	var args []any
@@ -52,7 +52,7 @@ func (r itemMySQLRepository) BulkInsert(context context.Context, items []entity.
 		)
 	}
 
-	_, err := r.db.ExecContext(context, query, args)
+	_, err := r.db.ExecContext(context, query, args...)
 	if err != nil {
 		return err
 	}
@@ -119,6 +119,76 @@ func (r itemMySQLRepository) FindByStoreUUID(context context.Context, storeUUID 
 	}
 
 	items, err := parseEntities[entity.Item](rows, r.parseEntity)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (r itemMySQLRepository) FindByStoreUUIDWithRelations(context context.Context, storeUUID string) ([]entity.Item, error) {
+	query := `
+		SELECT ti.id,
+		       ti.created_at,
+			   ti.updated_at,
+			   ti.uuid,
+			   ti.code,
+			   ti.name,
+			   ti.description,
+			   ti.price,
+			   ti.category_id,
+			   ti.store_id,
+			   tc.id,
+		       tc.created_at,
+			   tc.updated_at,
+			   tc.uuid,
+			   tc.name,
+			   tc.store_id
+		  FROM tb_item ti
+		  JOIN tb_category tc ON tc.id = ti.category_id AND tc.deleted_at IS NULL
+		  JOIN tb_store ts ON ts.id = ti.store_id AND ts.deleted_at IS NULL
+		 WHERE ti.deleted_at IS NULL
+		   AND ts.uuid = ?;
+	`
+
+	rows, err := r.db.QueryContext(
+		context,
+		query,
+		storeUUID,
+	)
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var items []entity.Item
+	for rows.Next() {
+		var item entity.Item
+
+		err = rows.Scan(
+			&item.ID,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+			&item.UUID,
+			&item.Code,
+			&item.Name,
+			&item.Description,
+			&item.Price,
+			&item.CategoryID,
+			&item.StoreID,
+			&item.Category.ID,
+			&item.Category.CreatedAt,
+			&item.Category.UpdatedAt,
+			&item.Category.UUID,
+			&item.Category.Name,
+			&item.Category.StoreID,
+		)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -237,12 +307,18 @@ func (r itemMySQLRepository) Update(context context.Context, item entity.Item) e
 			   ti.price = ?,
 			   ti.category_id = ?
 		 WHERE ti.deleted_at IS NULL
-		   AND ti.uuid = ?; 
+		   AND ti.uuid = id;
 	`
 
 	_, err := r.db.ExecContext(
 		context,
 		query,
+		item.Code,
+		item.Name,
+		item.Description,
+		item.Price,
+		item.Category.ID,
+		item.ID,
 	)
 	if err != nil {
 		return err

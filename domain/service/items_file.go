@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -35,6 +36,7 @@ func NewItemsFileService(
 	}
 }
 
+// Add integration test
 func (s ItemsFileService) Upload(context context.Context, storeUUID string, r io.Reader) error {
 	file, err := excelize.OpenReader(r)
 	if err != nil {
@@ -42,71 +44,88 @@ func (s ItemsFileService) Upload(context context.Context, storeUUID string, r io
 	}
 	defer file.Close()
 
-	rows, err := file.GetRows("Items")
+	rows, err := file.GetRows(constant.ItemsFileItemsSheetName)
 	if err != nil {
 		return err
 	}
+
+	items, err := s.dataManager.Item().FindByStoreUUIDWithRelations(context, storeUUID)
+	if err != nil {
+		return err
+	}
+	itemsMap := s.getItemsMapByCode(items)
+
+	categories, err := s.categoryService.FindByStoreUUID(context, storeUUID)
+	if err != nil {
+		return err
+	}
+	categoriesMap := s.getCategoriesMapByUUID(categories)
 
 	store, err := s.storeService.FindByUUID(context, storeUUID)
 	if err != nil {
 		return err
 	}
 
-	categories, err := s.categoryService.FindByStoreUUID(context, storeUUID)
-	if err != nil {
-		return err
-	}
-	categoriesMap := s.getCategoriesMap(categories)
+	labels := make(map[string]int)
+	insertItems := make([]entity.Item, 0)
 
-	items := make([]entity.Item, 0)
-
-	cols := make(map[string]int)
 	for i, row := range rows {
 		if i == 0 {
-			cols = s.getColumnsIndex(row)
+			labels = s.getLabelsIndex(row)
+
+			err = s.validateLabels(labels)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
-		price, err := strconv.ParseFloat(row[cols[constant.ItemsFileLabelPrice]], 64)
+		price, err := strconv.ParseFloat(row[labels[constant.ItemsFileLabelPrice]], 64)
 		if err != nil {
 			return err
+		}
+
+		category, ok := categoriesMap[row[labels[constant.ItemsFileLabelCategory]]]
+		if !ok {
+			return errors.New("") // Add error message
 		}
 
 		item := entity.Item{
-			Code:        row[cols[constant.ItemsFileLabelCode]],
-			Name:        row[cols[constant.ItemsFileLabelName]],
-			Description: row[cols[constant.ItemsFileLabelDescription]],
+			Code:        row[labels[constant.ItemsFileLabelCode]],
+			Name:        row[labels[constant.ItemsFileLabelName]],
+			Description: row[labels[constant.ItemsFileLabelDescription]],
 			UUID:        uuid.NewString(),
 			Price:       price,
-			Category:    categoriesMap[row[cols[constant.ItemsFileLabelCategory]]],
+			Category:    category,
 			Store:       store,
 		}
 
-		items = append(items, item)
+		if i, ok := itemsMap[item.Code]; ok {
+			if item.IsEqual(i) {
+				continue
+			}
+
+			item.ID = i.ID
+
+			err = s.itemService.Update(context, item)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+		insertItems = append(insertItems, item)
 	}
 
-	tx, err := s.dataManager.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	for _, item := range items {
-		// Bulk Insert
-		_, err = s.dataManager.Item().Create(context, item, tx)
+	if len(insertItems) > 0 {
+		err = s.dataManager.Item().BulkInsert(context, insertItems)
 		if err != nil {
 			return err
 		}
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return err
 	}
 	return nil
 }
 
-func (s ItemsFileService) getColumnsIndex(row []string) map[string]int {
+func (s ItemsFileService) getLabelsIndex(row []string) map[string]int {
 	labels := make(map[string]int)
 
 	for i, col := range row {
@@ -115,7 +134,28 @@ func (s ItemsFileService) getColumnsIndex(row []string) map[string]int {
 	return labels
 }
 
-func (s ItemsFileService) getCategoriesMap(categories []entity.Category) map[string]entity.Category {
+func (s ItemsFileService) validateLabels(labelsMap map[string]int) error {
+	labels := []string{
+		constant.ItemsFileLabelCode,
+		constant.ItemsFileLabelName,
+		constant.ItemsFileLabelDescription,
+		constant.ItemsFileLabelPrice,
+		constant.ItemsFileLabelCategory,
+	}
+
+	if len(labelsMap) != len(labels) {
+		return errors.New("") // Add error message
+	}
+
+	for _, label := range labels {
+		if _, ok := labelsMap[label]; !ok {
+			return errors.New("") // Add error message
+		}
+	}
+	return nil
+}
+
+func (s ItemsFileService) getCategoriesMapByUUID(categories []entity.Category) map[string]entity.Category {
 	r := make(map[string]entity.Category)
 
 	for _, category := range categories {
@@ -124,63 +164,114 @@ func (s ItemsFileService) getCategoriesMap(categories []entity.Category) map[str
 	return r
 }
 
-func (s ItemsFileService) Download(context context.Context, storeUUID string, isTemplate bool) ([]byte, error) {
-	file := excelize.NewFile()
-	defer file.Close() // Handle error?
+func (s ItemsFileService) getItemsMapByCode(items []entity.Item) map[string]entity.Item {
+	i := make(map[string]entity.Item)
 
-	index := file.GetActiveSheetIndex()
-	source := file.GetSheetName(index)
-
-	err := file.SetSheetName(source, constant.ItemsFileSheetName)
-	if err != nil {
-		return nil, err
+	for _, item := range items {
+		i[item.Code] = item
 	}
-
-	s.setLabels(file)
-
-	if !isTemplate {
-		items, err := s.itemService.FindByStoreUUID(context, storeUUID)
-		if err != nil {
-			return nil, err
-		}
-
-		for i, item := range items {
-			category, err := s.categoryService.FindByID(context, item.CategoryID)
-			if err != nil {
-				return nil, err
-			}
-			item.Category = category
-
-			s.setRow(file, i+2, item)
-		}
-	}
-
-	var buffer bytes.Buffer
-	file.Write(&buffer)
-
-	return buffer.Bytes(), nil
+	return i
 }
 
-func (s ItemsFileService) setRow(file *excelize.File, index int, item entity.Item) {
-	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("A%d", index), item.Code) // Como concatenar?
-	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("B%d", index), item.Name)
-	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("C%d", index), item.Description)
-	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("D%d", index), item.Price)
-	file.SetCellValue(constant.ItemsFileSheetName, fmt.Sprintf("E%d", index), item.Category.Name)
-}
-
-func (s ItemsFileService) setLabels(file *excelize.File) { // Handle error?
+// Add unit test
+func (s ItemsFileService) setLabels(file *excelize.File) {
 	style, _ := file.NewStyle(&excelize.Style{
 		Font: &excelize.Font{
 			Bold: true,
 		},
 	})
 
-	file.SetCellValue(constant.ItemsFileSheetName, "A1", constant.ItemsFileLabelCode)
-	file.SetCellValue(constant.ItemsFileSheetName, "B1", constant.ItemsFileLabelName)
-	file.SetCellValue(constant.ItemsFileSheetName, "C1", constant.ItemsFileLabelDescription)
-	file.SetCellValue(constant.ItemsFileSheetName, "D1", constant.ItemsFileLabelPrice)
-	file.SetCellValue(constant.ItemsFileSheetName, "E1", constant.ItemsFileLabelCategory)
+	file.SetCellValue(constant.ItemsFileItemsSheetName, "A1", constant.ItemsFileLabelCode)
+	file.SetCellValue(constant.ItemsFileItemsSheetName, "B1", constant.ItemsFileLabelName)
+	file.SetCellValue(constant.ItemsFileItemsSheetName, "C1", constant.ItemsFileLabelDescription)
+	file.SetCellValue(constant.ItemsFileItemsSheetName, "D1", constant.ItemsFileLabelPrice)
+	file.SetCellValue(constant.ItemsFileItemsSheetName, "E1", constant.ItemsFileLabelCategory)
 
-	file.SetCellStyle(constant.ItemsFileSheetName, "A1", "E1", style)
+	file.SetCellStyle(constant.ItemsFileItemsSheetName, "A1", "E1", style)
+}
+
+// Add unit test
+func (s ItemsFileService) makeCategoriesSheet(context context.Context, file *excelize.File, categories []entity.Category) error {
+	index, err := file.NewSheet(constant.ItemsFileCategoriesSheetName)
+	if err != nil {
+		return err
+	}
+
+	file.SetActiveSheet(index)
+
+	for i, category := range categories {
+		name, err := excelize.CoordinatesToCellName(1, i+1)
+		if err != nil {
+			return err
+		}
+
+		file.SetCellValue(constant.ItemsFileCategoriesSheetName, name, category.Name)
+	}
+	return nil
+}
+
+// Add unit test
+func (s ItemsFileService) makeDropList(file *excelize.File, categories []entity.Category) {
+	dataValidation := excelize.NewDataValidation(true)
+	dataValidation.Sqref = "E2:E1000"
+
+	dataValidation.SetSqrefDropList(fmt.Sprintf("%s!$A$1:$A$%d", constant.ItemsFileCategoriesSheetName, len(categories)))
+	file.AddDataValidation(constant.ItemsFileItemsSheetName, dataValidation)
+}
+
+// Add unit test
+func (s ItemsFileService) fillItemsSheet(file *excelize.File, items []entity.Item) {
+	for i, item := range items {
+		file.SetCellValue(constant.ItemsFileItemsSheetName, fmt.Sprintf("A%d", i), item.Code)
+		file.SetCellValue(constant.ItemsFileItemsSheetName, fmt.Sprintf("B%d", i), item.Name)
+		file.SetCellValue(constant.ItemsFileItemsSheetName, fmt.Sprintf("C%d", i), item.Description)
+		file.SetCellValue(constant.ItemsFileItemsSheetName, fmt.Sprintf("D%d", i), item.Price)
+		file.SetCellValue(constant.ItemsFileItemsSheetName, fmt.Sprintf("E%d", i), item.Category.Name)
+	}
+}
+
+// Add integration test
+func (s ItemsFileService) Download(context context.Context, storeUUID string, isTemplate bool) ([]byte, error) {
+	file := excelize.NewFile()
+	defer file.Close()
+
+	s.setLabels(file)
+
+	categories, err := s.categoryService.FindByStoreUUID(context, storeUUID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.makeCategoriesSheet(context, file, categories)
+	if err != nil {
+		return nil, err
+	}
+
+	file.SetActiveSheet(constant.ItemsFileItemsSheetIndex)
+
+	err = file.SetSheetVisible(constant.ItemsFileCategoriesSheetName, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = file.SetSheetName(constant.DefaultSheetName, constant.ItemsFileItemsSheetName)
+	if err != nil {
+		return nil, err
+	}
+
+	s.makeDropList(file, categories)
+
+	if !isTemplate {
+		items, err := s.itemService.FindByStoreUUIDWithRelations(context, storeUUID)
+		if err != nil {
+			return nil, err
+		}
+
+		s.fillItemsSheet(file, items)
+	}
+
+	var buffer bytes.Buffer
+	file.Write(&buffer)
+
+	return buffer.Bytes(), nil
 }

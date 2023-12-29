@@ -20,7 +20,6 @@ func main() {
 	dataManager := repository.NewDataManager(db)
 
 	metricsService := service.NewMetricsService()
-
 	storeService := service.NewStoreService(dataManager)
 	categoryService := service.NewCategoryService(dataManager, storeService)
 	itemService := service.NewItemService(categoryService, dataManager, storeService)

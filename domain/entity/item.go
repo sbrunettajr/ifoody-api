@@ -12,3 +12,11 @@ type Item struct {
 	Category    Category
 	Store       Store
 }
+
+func (e Item) IsEqual(item Item) bool {
+	return e.Code == item.Code &&
+		e.Name == item.Name &&
+		e.Description == item.Description &&
+		e.Price == item.Price &&
+		e.Category.Name == item.Category.Name
+}

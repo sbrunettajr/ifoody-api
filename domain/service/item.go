@@ -41,7 +41,7 @@ func (s ItemService) Create(context context.Context, item entity.Item) error {
 	}
 	item.Category = category
 
-	_, err = s.dataManager.Item().Create(context, item, nil)
+	_, err = s.dataManager.Item().Create(context, item)
 	if err != nil {
 		return err
 	}
@@ -66,6 +66,14 @@ func (s ItemService) FindByID(context context.Context, ID uint32) (entity.Item, 
 
 func (s ItemService) FindByStoreUUID(context context.Context, storeUUID string) ([]entity.Item, error) {
 	items, err := s.dataManager.Item().FindByStoreUUID(context, storeUUID)
+	if err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+func (s ItemService) FindByStoreUUIDWithRelations(context context.Context, storeUUID string) ([]entity.Item, error) {
+	items, err := s.dataManager.Item().FindByStoreUUIDWithRelations(context, storeUUID)
 	if err != nil {
 		return nil, err
 	}

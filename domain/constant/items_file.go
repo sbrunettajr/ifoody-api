@@ -1,7 +1,15 @@
 package constant
 
 const (
-	ItemsFileSheetName = "Items"
+	DefaultSheetName = "Sheet1"
+
+	ItemsFileItemsSheetName      = "Items"
+	ItemsFileCategoriesSheetName = "Categories"
+)
+
+const (
+	ItemsFileItemsSheetIndex      = 0
+	ItemsFileCategoriesSheetIndex = 1
 )
 
 const (
