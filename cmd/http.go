@@ -24,11 +24,14 @@ func main() {
 	categoryService := service.NewCategoryService(dataManager, storeService)
 	itemService := service.NewItemService(categoryService, dataManager, storeService)
 	itemsFileService := service.NewItemsFileService(categoryService, dataManager, itemService, storeService)
+	orderItemService := service.NewOrderItemService(dataManager, itemService)
+	orderService := service.NewOrderService(dataManager, orderItemService, storeService)
 
 	storeController := controller.NewStoreController(storeService)
 	categoryController := controller.NewCategoryController(categoryService)
 	itemController := controller.NewItemController(itemService)
 	itemsFileController := controller.NewItemsFileController(itemsFileService)
+	orderController := controller.NewOrderController(orderService)
 
 	e := echo.New()
 
@@ -56,7 +59,8 @@ func main() {
 
 	// v1.GET("/orders", orderController.FindAll)
 	// v1.GET("/orders/:order-uuid", orderController.FindByUUID)
-	// v1.POST("/orders", orderController.Create)
+
+	v1.POST("/orders", orderController.Create) // Implementado
 
 	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 

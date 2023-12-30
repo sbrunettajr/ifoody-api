@@ -53,3 +53,29 @@ CREATE TABLE tb_item_history (
     PRIMARY KEY (id),
     FOREIGN KEY (item_id) REFERENCES tb_item(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE tb_order (
+    id INT NOT NULL AUTO_INCREMENT,
+    created_at DATETIME NOT NULL DEFAULT NOW(),
+    updated_at DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    deleted_at DATETIME,
+    uuid VARCHAR(36) NOT NULL,
+    status enum('created') NOT NULL DEFAULT 'created',
+    store_id INT NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (store_id) REFERENCES tb_store(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE tb_order_item (
+    id INT NOT NULL AUTO_INCREMENT, 
+    created_at DATETIME NOT NULL DEFAULT NOW(),
+    updated_at DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
+    deleted_at DATETIME,
+    uuid VARCHAR(36) NOT NULL,
+    quantity INT NOT NULL,
+    item_id INT NOT NULL,
+    order_id INT NOT NULL,
+    PRIMARY KEY (id), 
+    FOREIGN KEY (item_id) REFERENCES tb_item(id),
+    FOREIGN KEY (order_id) REFERENCES tb_order(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
