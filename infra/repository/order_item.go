@@ -24,7 +24,7 @@ func newOrderItemMySQLRepository(
 func (r orderItemMySQLRepository) BulkInsert(context context.Context, orderID uint32, orderItems []entity.OrderItem, tx *sql.Tx) error {
 	query := `
 		INSERT 
-		  INTO tb_order_item(uuid, quantity, item_id, order_id)
+		  INTO tb_order_item(uuid, quantity, price, item_id, order_id)
 		VALUES %s  
 	`
 
@@ -32,7 +32,7 @@ func (r orderItemMySQLRepository) BulkInsert(context context.Context, orderID ui
 		return nil
 	}
 
-	values := strings.TrimSuffix(strings.Repeat("(?, ?, ?, ?), ", len(orderItems)), ", ")
+	values := strings.TrimSuffix(strings.Repeat("(?, ?, ?, ?, ?), ", len(orderItems)), ", ")
 	query = fmt.Sprintf(query, values)
 
 	var args []any
@@ -41,6 +41,7 @@ func (r orderItemMySQLRepository) BulkInsert(context context.Context, orderID ui
 			args,
 			orderItem.UUID,
 			orderItem.Quantity,
+			orderItem.Price,
 			orderItem.Item.ID,
 			orderID,
 		)

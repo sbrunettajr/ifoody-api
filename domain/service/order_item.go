@@ -33,6 +33,7 @@ func (s OrderItemService) BulkInsert(context context.Context, orderID uint32, or
 			return err
 		}
 		orderItems[i].Item = item
+		orderItems[i].Price = item.Price * float64(orderItems[i].Quantity)
 	}
 
 	err := s.dataManager.OrderItem().BulkInsert(context, orderID, orderItems, tx)
